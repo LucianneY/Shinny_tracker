@@ -1,0 +1,34 @@
+library(biomaRt)
+
+# Set up a biomart object to query the ENSEMBL database
+mart <- useMart(biomart = "ensembl", dataset = "hsapiens_gene_ensembl")
+
+gr <- GRanges(
+  seqnames = c("chr1", "chr1"),
+  ranges = IRanges(c(89993254, 89998989), c(93667062, 93715990)),
+  strand = c("+", "+")
+)
+
+# Get the list of genes within the genomic region using biomart
+genes <- getBM(
+  mart = mart,
+  attributes = c("ensembl_gene_id", "external_gene_name"),
+  filters = c("chromosome_name", "start", "end"),
+  values = list(
+    gr@seqnames[1],
+    start(gr)[1],
+    end(gr)[1]
+  ),
+  uniqueRows = TRUE
+)
+
+# Create a GRanges object from the genes
+gr <- GRanges(seqnames = genes$chromosome_name, 
+              IRanges(start = genes$start_position, end = genes$end_position), 
+              strand = "+")
+
+# Create a gTrack object with the smaller set of genes
+gTrack <- BiomartGeneRegionTrack(
+  genome = "hg38",
+  gr = gr,
+  name = "ENSEMBL")

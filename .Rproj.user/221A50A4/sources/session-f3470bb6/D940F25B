@@ -1,0 +1,27 @@
+{
+    "id": "D940F25B",
+    "path": "~/Documents/RTracker/backend.R",
+    "project_path": "backend.R",
+    "type": "r_source",
+    "hash": "693950983",
+    "contents": "",
+    "dirty": false,
+    "created": 1681325348130.0,
+    "source_on_save": false,
+    "relative_order": 1,
+    "properties": {
+        "tempName": "Untitled3",
+        "source_window_id": "",
+        "Source": "Source",
+        "cursorPosition": "39,0",
+        "scrollLine": "19"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 1681398864,
+    "encoding": "UTF-8",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1681398864725,
+    "read_only": false,
+    "read_only_alternatives": []
+}

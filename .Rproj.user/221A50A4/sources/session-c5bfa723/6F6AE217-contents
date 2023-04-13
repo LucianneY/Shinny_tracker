@@ -1,0 +1,71 @@
+# Install packages if not already installed
+if(!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+BiocManager::install("Rsamtools")
+install.packages(c("shiny", "shinydashboard", "dplyr", "data.table"))
+
+# Load packages
+library(shiny)
+library(shinydashboard)
+library(dplyr)
+library(data.table)
+library(rtracklayer)
+
+# Read in bigwig file
+bw_file <- import("./Bigwigs/Sample_Ruoxi6928_2019_02_22_Mphage_TNF-IL4_6hrs_Donor1_treat_pileup.bw",format = "bigWig")
+
+
+# Define server function
+server <- function(input, output, session) {
+  
+  # Function to get data from bigwig file
+  get_bigwig_data <- function(chrom, start, end) {
+    gr <- GRanges(seqnames = chrom, ranges = IRanges(start, end))
+    bw_data <- getRangeSummarizedData(bw_file, gr, type = "mean")
+    bw_data <- data.table(start = start:end, score = bw_data$score)
+    bw_data
+  }
+  
+  # Reactive expression to calculate zoom level
+  zoom_level <- reactive({
+    if (!is.null(input$chrom) && !is.null(input$start) && !is.null(input$end)) {
+      region_size <- input$end - input$start
+      if (region_size <= 1000) {
+        "bp"
+      } else if (region_size <= 100000) {
+        "1kb"
+      } else if (region_size <= 1000000) {
+        "10kb"
+      } else if (region_size <= 10000000) {
+        "100kb"
+      } else {
+        "1mb"
+      }
+    }
+  })
+  
+  # Reactive expression to get data for selected region
+  selected_region_data <- reactive({
+    req(input$chrom, input$start, input$end)
+    get_bigwig_data(input$chrom, input$start, input$end)
+  })
+  
+  # Output table of data for selected region
+  output$selected_region_table <- renderDataTable({
+    selected_region_data()
+  })
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

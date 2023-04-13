@@ -1,0 +1,78 @@
+# Load packages
+library(shiny)
+library(shinydashboard)
+library(dplyr)
+library(data.table)
+library(rtracklayer)
+
+# Read in bigwig file
+bw_file <- import("./Bigwigs/Sample_Ruoxi6928_2019_02_22_Mphage_TNF-IL4_6hrs_Donor1_treat_pileup.bw",format = "bigWig")
+
+
+server <- function(input, output) {
+  
+  # Define reactive expression for selected region
+  selected_region <- reactive({
+    get.bw(bw_file, input$chrom, input$start, input$end)
+  })
+  
+  # Define reactive expression for zoom level
+  zoom_level <- reactive({
+    round(log10((input$end - input$start) / 1000), 1)
+  })
+  
+  # Display zoom level in UI
+  output$zoom_level <- renderPrint({
+    zoom_level()
+  })
+  
+  # Display selected region in data table
+  output$selected_region_table <- renderDataTable({
+    as.data.frame(selected_region())
+  })
+  
+  # Display heatmap of selected region
+  output$heatmap <- renderPlot({
+    ggplot2::ggplot(selected_region(), ggplot2::aes(x = position, y = value)) +
+      ggplot2::geom_tile() +
+      ggplot2::scale_fill_gradient(low = "white", high = "red") +
+      ggplot2::theme_bw() +
+      ggplot2::theme(axis.text.x = ggplot2::element_blank())
+  })
+  
+  # Display heatmap in UI
+  output$heatmap_panel <- renderUI({
+    plotOutput("heatmap")
+  })
+  
+  # Display chromosome options in selectInput widget
+  output$chrom_options <- renderUI({
+    selectInput("chrom", label = "Chromosome", choices = chroms, selected = "chr1")
+  })
+  
+  # Display start and end position sliders
+  output$position_slider <- renderUI({
+    sliderInput("start", label = "Start position", min = 0, max = max_pos, value = 0, step = 1e4) +
+      sliderInput("end", label = "End position", min = 0, max = max_pos, value = max_pos, step = 1e4)
+  })
+  
+  # Update start and end position sliders when chromosome is changed
+  observeEvent(input$chrom, {
+    chrom_info <- chrom_sizes[chrom_sizes$chrom == input$chrom, ]
+    max_pos <- as.numeric(chrom_info$size)
+    updateSliderInput(session, "start", max = max_pos)
+    updateSliderInput(session, "end", max = max_pos)
+  })
+  
+}
+
+
+
+
+
+
+
+
+
+
+
