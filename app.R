@@ -92,7 +92,12 @@ server <- function(input, output) {
   
   # create plot
   output$myplot <- renderPlot({
-    plotTracks(track.list(),from=start(),to=end(),chromosome=chr())
+    plotTracks(track.list(),from=start(),to=end(),chromosome=chr(),
+               type = "hist",
+               col.title = "black",
+               col.axis = "black",
+               background.title = "white",
+               cex.title = 0.75)
   })
   
   # display the selected track range
