@@ -5,7 +5,8 @@ library(data.table)
 library(rtracklayer)
 library(Gviz)
 
-bw_file <- import("./Bigwigs/Sample_Ruoxi6928_2019_02_22_Mphage_TNF-IL4_6hrs_Donor1_treat_pileup.bw",format = "bigWig")
+#bw_file <- import("./Bigwigs/test_chr1.bw",format = "bigWig")
+
 gen = "hg38"
 
 ui <- fluidPage(
@@ -13,7 +14,8 @@ ui <- fluidPage(
     sidebarPanel(
       textInput(inputId = "chr", label = "Chromosome", value = "chr1"),
       numericInput(inputId = "start", label = "Start position", value = 89993254),
-      numericInput(inputId = "end", label = "End position", value = 93715990)
+      numericInput(inputId = "end", label = "End position", value = 93715990),
+      actionButton("update_button", "Update plot")
     ),
     mainPanel(
       plotOutput(outputId = "myplot", width = "100%", height = "600px") # Add width and height
@@ -21,6 +23,15 @@ ui <- fluidPage(
   )
 )
  
+# load bigwig files and assign to objects
+bigwigs <- list.files(path = "./Bigwigs", pattern = "\\.bw$", full.names = TRUE)
+for (bw_file in bigwigs) {
+  bw_obj_name <- gsub("\\.bw", "", basename(bw_file))
+  assign(bw_obj_name, import(bw_file, format = "bigWig"))
+}
+# Extract target strings from file names
+target_objects <- gsub("\\.bw", "", basename(bigwigs))
+
 
 server <- function(input, output) {
   # Load packages
@@ -34,8 +45,21 @@ server <- function(input, output) {
   start <- reactive({input$start})
   end <- reactive({input$end})
   
-  # Read in bigwig file
-  bw_file <- reactive({import(paste0("./Bigwigs/test_",chr(),".bw"),format = "bigWig")})
+  # Define function to read bigwig files
+  read_bigwig_file <- function() {
+    
+    # Prompt user to select a file
+    bw_file <- file.choose()
+    
+    # Prompt user to specify variable name for imported object
+    bw_obj_name <- readline(prompt = "Enter a variable name for the imported object: ")
+    
+    # Import bigWig file and assign to variable with user-specified name
+    assign(bw_obj_name, import(bw_file, format = "bigWig"), envir = .GlobalEnv)
+    
+    # Return the name of the variable assigned to the imported object
+    return(bw_obj_name)
+  }
   
   # create genome region
   gr1 <- reactive({
@@ -54,18 +78,16 @@ server <- function(input, output) {
                            name = "ENSEMBL")
   })
   
-  # create dTrack1
-  dTrack1 <- reactive({
-    DataTrack(bw_file(),
+  # create dTracks
+  dTracks <- lapply(target_objects, function(obj) {
+    DataTrack(get(obj),
               type = "l",
-              name="track1")
+              name = obj)
   })
   
   # create track.list
   track.list <- reactive({
-    print(dTrack1())
-    print(gTrack())
-    list(dTrack1(), gTrack())
+    c(dTracks, list(gTrack()))
   })
   
   # create plot
